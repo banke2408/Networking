@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Priya Sends a Message to Raj</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090f;
+  --surface:#0f1623;
+  --surface2:#151f30;
+  --border:#1e304f;
+  --accent:#4f9eff;
+  --green:#22d3a5;
+  --yellow:#fbbf24;
+  --pink:#f472b6;
+  --purple:#a78bfa;
+  --red:#f87171;
+  --text:#e2e8f0;
+  --muted:#64748b;
+  --sans:'Nunito',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+
+/* grid bg */
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(79,158,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(79,158,255,0.025) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0;}
+
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px;position:relative;z-index:1;}
+
+/* ===== HEADER ===== */
+.hero{text-align:center;padding:48px 0 32px;}
+.badge{display:inline-block;background:rgba(79,158,255,0.1);border:1px solid rgba(79,158,255,0.3);
+  color:var(--accent);font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  padding:4px 14px;border-radius:20px;margin-bottom:16px;text-transform:uppercase;}
+.hero h1{font-size:clamp(24px,5vw,46px);font-weight:900;line-height:1.1;margin-bottom:12px;
+  background:linear-gradient(135deg,#fff 0%,var(--accent) 50%,var(--purple) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero p{font-size:15px;color:var(--muted);max-width:520px;margin:0 auto;line-height:1.7;}
+
+/* ===== STEP NAV ===== */
+.step-nav{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-bottom:32px;}
+.snav{padding:7px 14px;font-family:var(--mono);font-size:11px;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted);border-radius:8px;cursor:pointer;transition:all .2s;}
+.snav:hover{border-color:var(--accent);color:var(--accent);}
+.snav.on{background:rgba(79,158,255,0.12);border-color:var(--accent);color:var(--accent);}
+
+/* progress */
+.prog-wrap{height:3px;background:var(--border);border-radius:2px;margin-bottom:36px;overflow:hidden;}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:2px;transition:width .4s;}
+
+/* ===== PANELS ===== */
+.panel{display:none;animation:fadeUp .35s ease;}
+.panel.on{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+/* ===== CARD ===== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px 32px;margin-bottom:20px;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.4;}
+.ctag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-family:var(--mono);margin-bottom:6px;}
+.ctitle{font-size:20px;font-weight:800;margin-bottom:8px;}
+.csub{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+
+/* ===== CALLOUT ===== */
+.callout{display:flex;gap:10px;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.25);
+  border-radius:10px;padding:12px 14px;font-size:13px;color:#c4b5fd;line-height:1.6;margin:14px 0;}
+.callout-g{background:rgba(34,211,165,0.08);border-color:rgba(34,211,165,0.25);color:#6ee7b7;}
+.callout-y{background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.25);color:#fde68a;}
+
+/* ===== PEOPLE SCENE ===== */
+.people-scene{display:flex;align-items:center;gap:0;margin:20px 0;}
+.person-box{flex:1;text-align:center;padding:20px 16px;background:var(--surface2);border-radius:14px;border:1px solid var(--border);}
+.avatar{width:64px;height:64px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;}
+.av-priya{background:rgba(244,114,182,0.15);border:2px solid var(--pink);}
+.av-raj{background:rgba(34,211,165,0.15);border:2px solid var(--green);}
+.person-name{font-weight:800;font-size:15px;margin-bottom:3px;}
+.person-ip{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.device-label{font-size:11px;color:var(--muted);margin-top:4px;}
+
+.wire-zone{flex:2;padding:0 12px;position:relative;}
+
+/* ===== MESSAGE BUBBLE ===== */
+.bubble-wrap{display:flex;flex-direction:column;gap:8px;margin:16px 0;}
+.bubble{display:inline-block;padding:10px 16px;border-radius:16px;font-size:14px;font-weight:600;max-width:80%;word-break:break-word;}
+.bubble-out{background:rgba(79,158,255,0.15);border:1.5px solid rgba(79,158,255,0.4);color:var(--accent);align-self:flex-start;border-radius:16px 16px 16px 4px;}
+.bubble-in{background:rgba(34,211,165,0.15);border:1.5px solid rgba(34,211,165,0.4);color:var(--green);align-self:flex-end;border-radius:16px 16px 4px 16px;}
+
+/* ===== INPUT AREA ===== */
+.msg-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.msg-row input{flex:1;min-width:180px;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);font-family:var(--mono);font-size:14px;padding:11px 15px;border-radius:10px;outline:none;transition:border-color .2s;}
+.msg-row input:focus{border-color:var(--accent);}
+.btn{padding:11px 22px;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;
+  font-family:var(--sans);font-size:14px;font-weight:700;border:none;border-radius:10px;cursor:pointer;transition:opacity .2s,transform .1s;white-space:nowrap;}
+.btn:hover{opacity:.88;}
+.btn:active{transform:scale(.97);}
+.btn2{background:transparent;border:1px solid var(--border);color:var(--muted);padding:10px 18px;
+  font-family:var(--sans);font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;transition:all .2s;}
+.btn2:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ===== CHAR TILES ===== */
+.char-row{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
+.ctile{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:default;}
+.cbox{width:48px;height:48px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:18px;font-weight:700;border:1.5px solid;}
+.cidx{font-size:8px;color:var(--muted);font-family:var(--mono);}
+
+/* ===== ASCII TABLE ===== */
+.atable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;}
+.atable th{text-align:left;padding:9px 12px;color:var(--muted);font-size:9px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--border);}
+.atable td{padding:9px 12px;border-bottom:1px solid rgba(30,48,79,0.4);vertical-align:middle;}
+.atable tr:last-child td{border-bottom:none;}
+.atable tr:hover td{background:rgba(79,158,255,0.04);}
+.cchar{width:36px;height:36px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;border:1.5px solid;}
+
+/* ===== BITS ===== */
+.bits-row{display:flex;gap:3px;flex-wrap:wrap;}
+.bit{width:22px;height:26px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;font-weight:700;transition:all .3s;}
+.b1{background:rgba(79,158,255,0.18);border:1px solid rgba(79,158,255,0.5);color:var(--accent);}
+.b0{background:rgba(100,116,139,0.08);border:1px solid rgba(100,116,139,0.18);color:var(--muted);}
+
+/* ===== BINARY STREAM ===== */
+.stream-wrap{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:13px 15px;
+  overflow:hidden;position:relative;height:52px;display:flex;align-items:center;margin:12px 0;}
+.stream-txt{font-family:var(--mono);font-size:13px;color:var(--accent);white-space:nowrap;animation:scroll 14s linear infinite;}
+@keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.fade-r{position:absolute;right:0;top:0;bottom:0;width:80px;background:linear-gradient(to left,var(--bg),transparent);pointer-events:none;}
+
+/* ===== BYTE BLOCKS ===== */
+.byte-stream{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0;}
+.bblock{background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;padding:8px 11px;
+  font-family:var(--mono);cursor:pointer;transition:all .2s;}
+.bblock:hover,.bblock.sel{border-color:var(--yellow);background:rgba(251,191,36,0.07);}
+.blabel{font-size:8px;color:var(--muted);margin-bottom:3px;}
+.bchar{font-size:16px;font-weight:700;margin-bottom:2px;}
+.bbits{font-size:10px;letter-spacing:1px;}
+
+/* ===== PACKET VISUAL ===== */
+.pkt-struct{border:1.5px solid var(--border);border-radius:12px;overflow:hidden;font-family:var(--mono);font-size:12px;margin:14px 0;}
+.pkt-row{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:14px;}
+.pkt-row:last-child{border-bottom:none;}
+.pkt-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;min-width:80px;padding-top:2px;line-height:1.4;}
+.pkt-val{flex:1;display:flex;flex-wrap:wrap;gap:5px;align-items:center;}
+.fld{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:11px;margin:1px;}
+.fi{background:rgba(79,158,255,0.12);border:1px solid rgba(79,158,255,0.3);color:var(--accent);}
+.fc{background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.3);color:var(--purple);}
+.fd{background:rgba(34,211,165,0.12);border:1px solid rgba(34,211,165,0.3);color:var(--green);}
+.fe{background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.3);color:var(--red);}
+.fy{background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);color:var(--yellow);}
+
+/* ===== PACKET CARDS ===== */
+.pkts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin:12px 0;}
+.pcard{background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .2s;}
+.pcard:hover{transform:translateY(-2px);}
+.pcard-top{padding:9px 13px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:11px;}
+.pcard-body{padding:10px 13px;}
+.ppayload{font-family:var(--mono);font-size:11px;word-break:break-all;line-height:1.5;margin-bottom:5px;}
+.pbin{font-family:var(--mono);font-size:8px;color:var(--muted);word-break:break-all;line-height:1.6;}
+
+/* ===== NETWORK SVG ===== */
+.net-wrap{position:relative;width:100%;height:300px;background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:12px 0;}
+#rsvg{width:100%;height:100%;}
+
+/* ===== REASSEMBLY ===== */
+.arrive-row{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 18px;min-height:50px;}
+.achip{padding:6px 12px;border-radius:7px;font-family:var(--mono);font-size:11px;border:1.5px solid;cursor:default;}
+.slots-row{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0;min-height:50px;}
+.slot{padding:6px 12px;border-radius:7px;font-family:var(--mono);font-size:11px;border:1.5px dashed var(--border);
+  color:var(--muted);transition:all .4s ease;min-width:70px;text-align:center;}
+.slot.filled{border-style:solid;}
+.final-box{background:rgba(34,211,165,0.08);border:1px solid rgba(34,211,165,0.3);border-radius:12px;
+  padding:18px 22px;font-family:var(--mono);font-size:15px;color:var(--green);text-align:center;
+  margin-top:16px;display:none;}
+.final-box.show{display:block;animation:fadeUp .5s ease;}
+
+/* ===== STATS ROW ===== */
+.stats-row{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0;}
+.stat-box{flex:1;min-width:100px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.stat-lbl{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px;font-family:var(--mono);}
+.stat-val{font-size:24px;font-weight:800;font-family:var(--mono);}
+
+/* ===== NAV ARROWS ===== */
+.nav-arrows{display:flex;justify-content:space-between;align-items:center;margin:32px 0 24px;}
+.step-ctr{font-family:var(--mono);font-size:12px;color:var(--muted);}
+
+/* legend */
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 4px;}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+.ldot{width:9px;height:9px;border-radius:50%;}
+
+.route-ctrl{display:flex;gap:9px;margin-top:12px;flex-wrap:wrap;align-items:center;}
+.ssel{background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  font-family:var(--mono);font-size:12px;padding:8px 12px;border-radius:8px;outline:none;}
+.sbar{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:8px 14px;font-family:var(--mono);font-size:12px;color:var(--green);min-width:160px;}
+
+footer{text-align:center;padding:28px 0 20px;font-size:11px;color:var(--muted);
+  font-family:var(--mono);border-top:1px solid var(--border);margin-top:16px;}
+
+/* color families for packets */
+.pc0{--pc:#4f9eff;--pb:rgba(79,158,255,0.12);}
+.pc1{--pc:#22d3a5;--pb:rgba(34,211,165,0.12);}
+.pc2{--pc:#fbbf24;--pb:rgba(251,191,36,0.12);}
+.pc3{--pc:#f472b6;--pb:rgba(244,114,182,0.12);}
+.pc4{--pc:#a78bfa;--pb:rgba(167,139,250,0.12);}
+
+@keyframes bitPop{0%{transform:scale(1.3);background:rgba(79,158,255,0.5);}100%{transform:scale(1);}}
+.bpop{animation:bitPop .4s ease forwards;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">Computer Networking — Story Explainer</div>
+  <h1>Priya sends "Hi Raj!" 👩‍💻</h1>
+  <p>Follow every single step — from keypress to delivery — exactly how a message travels across the internet as 0s and 1s.</p>
+</div>
+
+<!-- NAV -->
+<div class="step-nav">
+  <button class="snav on" onclick="go(0)">01 · The Message</button>
+  <button class="snav" onclick="go(1)">02 · Characters</button>
+  <button class="snav" onclick="go(2)">03 · ASCII Codes</button>
+  <button class="snav" onclick="go(3)">04 · Binary Bits</button>
+  <button class="snav" onclick="go(4)">05 · Packets</button>
+  <button class="snav" onclick="go(5)">06 · Routing</button>
+  <button class="snav" onclick="go(6)">07 · Delivery</button>
+</div>
+<div class="prog-wrap"><div class="prog-bar" id="pbar" style="width:14.2%"></div></div>
+
+<!-- ============================
+     PANEL 0 — THE MESSAGE
+============================= -->
+<div class="panel on" id="p0">
+  <div class="card">
+    <div class="ctag">Step 01</div>
+    <div class="ctitle">Priya types a message to Raj</div>
+    <div class="csub">Type any message below — this is what Priya types on her phone. Raj is somewhere else on the internet. How does it reach him?</div>
+
+    <!-- People scene -->
+    <div class="people-scene">
+      <div class="person-box">
+        <div class="avatar av-priya">👩</div>
+        <div class="person-name" style="color:var(--pink)">Priya</div>
+        <div class="person-ip">192.168.1.10</div>
+        <div class="device-label">Sender · Mumbai</div>
+      </div>
+      <div class="wire-zone">
+        <svg viewBox="0 0 200 60" width="100%" height="60">
+          <defs>
+            <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0 0 L6 3 L0 6 Z" fill="#4f9eff"/>
+            </marker>
+          </defs>
+          <line x1="10" y1="30" x2="185" y2="30" stroke="#1e304f" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arr)"/>
+          <text x="100" y="20" text-anchor="middle" fill="#64748b" font-size="9" font-family="JetBrains Mono">internet</text>
+          <text id="wire-msg" x="100" y="48" text-anchor="middle" fill="#4f9eff" font-size="8" font-family="JetBrains Mono"></text>
+        </svg>
+      </div>
+      <div class="person-box">
+        <div class="avatar av-raj">👨</div>
+        <div class="person-name" style="color:var(--green)">Raj</div>
+        <div class="person-ip">203.0.113.45</div>
+        <div class="device-label">Receiver · Delhi</div>
+      </div>
+    </div>
+
+    <!-- Input -->
+    <div class="msg-row">
+      <input id="msg-in" value="Hi Raj!" maxlength="28" oninput="onMsg()" placeholder="Type Priya's message…">
+      <button class="btn" onclick="onMsg();go(1)">Start journey →</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-lbl">Characters</div><div class="stat-val" style="color:var(--accent)" id="s-chars">7</div></div>
+      <div class="stat-box"><div class="stat-lbl">Bytes</div><div class="stat-val" style="color:var(--purple)" id="s-bytes">7</div></div>
+      <div class="stat-box"><div class="stat-lbl">Total Bits</div><div class="stat-val" style="color:var(--green)" id="s-bits">56</div></div>
+      <div class="stat-box"><div class="stat-lbl">Packets</div><div class="stat-val" style="color:var(--yellow)" id="s-pkts">2</div></div>
+    </div>
+
+    <div class="callout">
+      <span>💡</span>
+      <span>Priya's phone doesn't "send text." It converts every character into a number, turns those numbers into binary (0s and 1s), wraps them in packets, and fires them through routers all the way to Raj's phone. Let's follow each step.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     PANEL 1 — CHARACTERS
+============================= -->
+<div class="panel" id="p1">
+  <div class="card">
+    <div class="ctag">Step 02</div>
+    <div class="ctitle">Breaking into individual characters</div>
+    <div class="csub">The phone looks at the message one character at a time — including spaces and punctuation. Every single character gets its own turn.</div>
+
+    <div class="callout callout-y">
+      <span>📌</span>
+      <span>The computer sees <strong>characters</strong>, not words. "Hi Raj!" is not one thing — it is 7 separate characters, each processed independently.</span>
+    </div>
+
+    <div class="char-row" id="char-row"></div>
+
+    <div style="margin-top:20px; padding:16px; background:var(--surface2); border-radius:10px; border:1px solid var(--border);">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:var(--mono)">Each character boxed separately:</div>
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-family:var(--mono);font-size:13px;" id="char-split-viz"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     PANEL 2 — ASCII
+============================= -->
+<div class="panel" id="p2">
+  <div class="card">
+    <div class="ctag">Step 03</div>
+    <div class="ctitle">ASCII lookup — each character → a number</div>
+    <div class="csub">The phone opens the ASCII table and looks up every character. "H" → 72, "i" → 105, " " → 32, "R" → 82 and so on. Now the message is just a list of numbers.</div>
+
+    <div class="callout">
+      <span>📖</span>
+      <span>ASCII is a <strong>universally agreed codebook</strong>. Priya's Mumbai phone and Raj's Delhi phone both have the exact same table. That's how they understand each other.</span>
+    </div>
+
+    <table class="atable">
+      <thead>
+        <tr>
+          <th>Char</th>
+          <th>Decimal</th>
+          <th>Hex</th>
+          <th>Binary (8 bits)</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody id="ascii-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================
+     PANEL 3 — BINARY
+============================= -->
+<div class="panel" id="p3">
+  <div class="card">
+    <div class="ctag">Step 04</div>
+    <div class="ctitle">Converting numbers to 0s and 1s</div>
+    <div class="csub">Each ASCII number is written in binary. "H" = 72 = <span style="color:var(--accent);font-family:var(--mono)">01001000</span>. These bits are what literally travel through the wire / fibre / Wi-Fi as electrical pulses or light flashes.</div>
+
+    <div class="callout callout-g">
+      <span>⚡</span>
+      <span>In a copper wire: <strong>1 = high voltage</strong>, <strong>0 = low voltage</strong>. In fibre optic cable: <strong>1 = light pulse ON</strong>, <strong>0 = light OFF</strong>. In Wi-Fi: two different radio wave patterns represent 0 and 1.</span>
+    </div>
+
+    <!-- scrolling stream -->
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">Live bit stream leaving Priya's phone →</div>
+    <div class="stream-wrap"><div class="stream-txt" id="stream-txt"></div><div class="fade-r"></div></div>
+
+    <!-- byte blocks -->
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin:14px 0 6px;">Click any character byte to see its bits:</div>
+    <div class="byte-stream" id="byte-stream"></div>
+
+    <div id="bit-detail" style="display:none;margin-top:14px;">
+      <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">Bit breakdown:</div>
+      <div id="bit-vis" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;"></div>
+      <div id="bit-math" style="font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.8;background:var(--surface2);border-radius:8px;padding:10px 14px;border:1px solid var(--border);"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     PANEL 4 — PACKETS
+============================= -->
+<div class="panel" id="p4">
+  <div class="card">
+    <div class="ctag">Step 05</div>
+    <div class="ctitle">Wrapping bits into packets</div>
+    <div class="csub">The binary stream is chopped into small packets. Each packet gets a <strong>header</strong> — like addressing an envelope — telling routers where to send it and how to reassemble everything at Raj's end.</div>
+
+    <div class="callout callout-y">
+      <span>📦</span>
+      <span>Why packets? If the full message was sent as one piece and something went wrong mid-way, everything would need to be re-sent. With packets, only the lost packet is re-sent. Also different packets can travel through different routes simultaneously — much faster!</span>
+    </div>
+
+    <!-- header diagram -->
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">Anatomy of one packet:</div>
+    <div class="pkt-struct">
+      <div class="pkt-row" style="background:rgba(79,158,255,0.03)">
+        <div class="pkt-lbl">IP Header<br><span style="color:#4f9eff">20 bytes</span></div>
+        <div class="pkt-val">
+          <span class="fld fi">Version: IPv4</span>
+          <span class="fld fi">TTL: 64</span>
+          <span class="fld fi">From: 192.168.1.10 (Priya)</span>
+          <span class="fld fi">To: 203.0.113.45 (Raj)</span>
+        </div>
+      </div>
+      <div class="pkt-row" style="background:rgba(167,139,250,0.03)">
+        <div class="pkt-lbl">TCP Header<br><span style="color:#a78bfa">20 bytes</span></div>
+        <div class="pkt-val">
+          <span class="fld fc">Src Port: 443</span>
+          <span class="fld fc">Dst Port: 443</span>
+          <span class="fld fc">Seq No: <span id="seq-disp">0x0001</span></span>
+          <span class="fld fc">ACK</span>
+          <span class="fld fc">Checksum</span>
+        </div>
+      </div>
+      <div class="pkt-row" style="background:rgba(34,211,165,0.03)">
+        <div class="pkt-lbl">Payload<br><span style="color:#22d3a5">your bits</span></div>
+        <div class="pkt-val">
+          <span class="fld fd" id="payload-disp">48 69 20</span>
+          <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">← actual message bytes in hex</span>
+        </div>
+      </div>
+      <div class="pkt-row" style="background:rgba(248,113,113,0.03)">
+        <div class="pkt-lbl">Trailer<br><span style="color:#f87171">4 bytes</span></div>
+        <div class="pkt-val">
+          <span class="fld fe">CRC Error Check</span>
+          <span style="font-size:10px;color:var(--muted);font-family:var(--mono)">← if even 1 bit flipped, this catches it</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin:16px 0 8px;">Priya's message split into <span id="pkt-count-lbl" style="color:var(--yellow)">2</span> packets:</div>
+    <div class="pkts-grid" id="pkts-grid"></div>
+  </div>
+</div>
+
+<!-- ============================
+     PANEL 5 — ROUTING
+============================= -->
+<div class="panel" id="p5">
+  <div class="card">
+    <div class="ctag">Step 06</div>
+    <div class="ctitle">Packets travel through routers</div>
+    <div class="csub">Each packet is passed from router to router. Every router reads the destination IP (Raj's IP: 203.0.113.45) and decides the best next hop. Different packets may take different paths — and that's perfectly fine!</div>
+
+    <div class="callout">
+      <span>🔀</span>
+      <span>This is <strong>packet switching</strong>. Each router is like a post office that reads the address and decides which truck to put the packet on. The internet automatically reroutes if one path is congested or broken.</span>
+    </div>
+
+    <div class="net-wrap">
+      <svg id="rsvg" viewBox="0 0 900 280">
+        <defs>
+          <marker id="arh" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+            <path d="M0 0 L6 3 L0 6 Z" fill="#1e304f"/>
+          </marker>
+        </defs>
+        <!-- edges -->
+        <g stroke="#1e304f" stroke-width="1.5" fill="none" marker-end="url(#arh)">
+          <line x1="90" y1="140" x2="200" y2="80"/>
+          <line x1="90" y1="140" x2="200" y2="200"/>
+          <line x1="215" y1="80" x2="340" y2="60"/>
+          <line x1="215" y1="80" x2="340" y2="140"/>
+          <line x1="215" y1="200" x2="340" y2="140"/>
+          <line x1="215" y1="200" x2="340" y2="220"/>
+          <line x1="355" y1="60" x2="480" y1="60" x2="480" y2="100"/>
+          <line x1="355" y1="140" x2="480" y2="100"/>
+          <line x1="355" y1="140" x2="480" y2="180"/>
+          <line x1="355" y1="220" x2="480" y2="180"/>
+          <line x1="495" y1="100" x2="620" y2="80"/>
+          <line x1="495" y1="100" x2="620" y2="160"/>
+          <line x1="495" y1="180" x2="620" y2="160"/>
+          <line x1="495" y1="180" x2="620" y2="230"/>
+          <line x1="635" y1="80" x2="800" y2="140"/>
+          <line x1="635" y1="160" x2="800" y2="140"/>
+          <line x1="635" y1="230" x2="800" y2="140"/>
+        </g>
+        <!-- Priya node -->
+        <g>
+          <circle cx="70" cy="140" r="30" fill="#1a0a1e" stroke="#f472b6" stroke-width="2"/>
+          <text x="70" y="136" text-anchor="middle" fill="#f472b6" font-size="9" font-family="Nunito" font-weight="800">PRIYA</text>
+          <text x="70" y="148" text-anchor="middle" fill="#f472b6" font-size="8" font-family="JetBrains Mono">Mumbai</text>
+          <text x="70" y="182" text-anchor="middle" fill="#64748b" font-size="7" font-family="JetBrains Mono">192.168.1.10</text>
+        </g>
+        <!-- Routers -->
+        <g fill="#0f1623" stroke="#1e304f" stroke-width="1.5">
+          <circle cx="215" cy="80" r="18"/><circle cx="215" cy="200" r="18"/>
+          <circle cx="355" cy="60" r="18"/><circle cx="355" cy="140" r="18"/><circle cx="355" cy="220" r="18"/>
+          <circle cx="480" cy="100" r="18"/><circle cx="480" cy="180" r="18"/>
+          <circle cx="620" cy="80" r="18"/><circle cx="620" cy="160" r="18"/><circle cx="620" cy="230" r="18"/>
+        </g>
+        <g fill="#94a3b8" font-size="7" font-family="JetBrains Mono" text-anchor="middle">
+          <text x="215" y="77">RTR-A</text><text x="215" y="87">10.0.0.1</text>
+          <text x="215" y="197">RTR-B</text><text x="215" y="207">10.0.0.2</text>
+          <text x="355" y="57">RTR-C</text><text x="355" y="67">10.0.1.1</text>
+          <text x="355" y="137">RTR-D</text><text x="355" y="147">10.0.1.2</text>
+          <text x="355" y="217">RTR-E</text><text x="355" y="227">10.0.1.3</text>
+          <text x="480" y="97">ISP-1</text><text x="480" y="107" fill="#a78bfa">CORE</text>
+          <text x="480" y="177">ISP-2</text><text x="480" y="187" fill="#a78bfa">CORE</text>
+          <text x="620" y="77">RTR-F</text><text x="620" y="87">10.0.2.1</text>
+          <text x="620" y="157">RTR-G</text><text x="620" y="167">10.0.2.2</text>
+          <text x="620" y="227">RTR-H</text><text x="620" y="237">10.0.2.3</text>
+        </g>
+        <!-- ISP circles bigger -->
+        <circle cx="480" cy="100" r="18" fill="#110828" stroke="#7c3aed" stroke-width="1.5"/>
+        <circle cx="480" cy="180" r="18" fill="#110828" stroke="#7c3aed" stroke-width="1.5"/>
+        <!-- Raj node -->
+        <g>
+          <circle cx="820" cy="140" r="30" fill="#031a10" stroke="#22d3a5" stroke-width="2"/>
+          <text x="820" y="136" text-anchor="middle" fill="#22d3a5" font-size="9" font-family="Nunito" font-weight="800">RAJ</text>
+          <text x="820" y="148" text-anchor="middle" fill="#22d3a5" font-size="8" font-family="JetBrains Mono">Delhi</text>
+          <text x="820" y="182" text-anchor="middle" fill="#64748b" font-size="7" font-family="JetBrains Mono">203.0.113.45</text>
+        </g>
+        <!-- moving packets layer -->
+        <g id="mpkts"></g>
+        <!-- TTL display -->
+        <rect x="8" y="8" width="95" height="34" rx="6" fill="#0f1623" stroke="#1e304f" stroke-width="1"/>
+        <text x="55" y="21" text-anchor="middle" fill="#64748b" font-size="7" font-family="JetBrains Mono">TTL remaining</text>
+        <text id="ttl-txt" x="55" y="35" text-anchor="middle" fill="#fbbf24" font-size="13" font-family="JetBrains Mono" font-weight="700">64</text>
+      </svg>
+    </div>
+
+    <div class="route-ctrl">
+      <button class="btn" onclick="startRoute()">Send Packets ▶</button>
+      <button class="btn2" onclick="resetRoute()">Reset</button>
+      <select class="ssel" id="spd"><option value="1">Normal</option><option value="2">Fast</option><option value="0.4">Slow (classroom)</option></select>
+      <div class="sbar" id="rstatus">Press Send Packets to animate the journey</div>
+    </div>
+
+    <div class="legend" style="margin-top:12px">
+      <div class="leg"><div class="ldot" style="background:#f472b6"></div>Priya (sender)</div>
+      <div class="leg"><div class="ldot" style="background:#94a3b8"></div>Router</div>
+      <div class="leg"><div class="ldot" style="background:#a78bfa"></div>ISP Core</div>
+      <div class="leg"><div class="ldot" style="background:#22d3a5"></div>Raj (receiver)</div>
+      <div class="leg"><div class="ldot" style="background:#fbbf24"></div>Packet in flight</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================
+     PANEL 6 — DELIVERY
+============================= -->
+<div class="panel" id="p6">
+  <div class="card">
+    <div class="ctag">Step 07</div>
+    <div class="ctitle">Raj's phone reassembles the message</div>
+    <div class="csub">All packets arrive at Raj's phone (possibly out of order). TCP uses the <strong>sequence numbers</strong> in each packet's header to sort them, reassemble the binary, look up ASCII, and display the original text.</div>
+
+    <div class="callout callout-g">
+      <span>🔧</span>
+      <span>If any packet is missing or corrupted (CRC check fails), Raj's phone sends a <strong>NAK</strong> back to Priya's phone asking for that specific packet again. The entire message does NOT need to be re-sent — only the missing piece.</span>
+    </div>
+
+    <!-- Conversation view -->
+    <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">Priya's screen:</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div class="bubble-wrap">
+            <div class="bubble bubble-out" id="priya-bubble">Hi Raj!</div>
+            <div style="font-size:9px;color:var(--muted);font-family:var(--mono);padding-left:4px;">✓✓ Delivered</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">Raj's screen (after reassembly):</div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div class="bubble-wrap">
+            <div class="bubble bubble-in" id="raj-bubble" style="opacity:.3">…waiting…</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Packets arriving -->
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">Packets arriving at Raj's phone (shuffled order):</div>
+    <div class="arrive-row" id="arr-row"></div>
+
+    <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">TCP buffer — sorting by sequence number:</div>
+    <div class="slots-row" id="slots-row"></div>
+
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px;">
+      <button class="btn" onclick="doReasm()">Reassemble →</button>
+      <button class="btn2" onclick="resetReasm()">Shuffle again</button>
+    </div>
+
+    <div class="final-box" id="final-box">
+      ✓ Raj reads: "<span id="final-txt"></span>"<br>
+      <span style="font-size:11px;color:#6ee7b7;margin-top:6px;display:block">
+        <span id="final-info"></span>
+      </span>
+    </div>
+
+    <!-- Full journey recap -->
+    <div style="margin-top:24px;padding:18px 20px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;">
+      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:12px;letter-spacing:.06em;text-transform:uppercase;">Complete journey recap</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;font-family:var(--mono);">
+        <div>👩 Priya types <span style="color:var(--pink)" id="recap-msg">"Hi Raj!"</span></div>
+        <div style="color:var(--muted)">↓</div>
+        <div>📝 Split into <span style="color:var(--yellow)" id="recap-chars">7</span> characters</div>
+        <div style="color:var(--muted)">↓</div>
+        <div>📖 Each character looked up in ASCII table → numbers</div>
+        <div style="color:var(--muted)">↓</div>
+        <div>⚡ Numbers converted to <span style="color:var(--accent)" id="recap-bits">56</span> binary bits (0s and 1s)</div>
+        <div style="color:var(--muted)">↓</div>
+        <div>📦 Bits wrapped into <span style="color:var(--yellow)" id="recap-pkts">2</span> packets with IP+TCP headers</div>
+        <div style="color:var(--muted)">↓</div>
+        <div>🔀 Packets routed through multiple routers across internet</div>
+        <div style="color:var(--muted)">↓</div>
+        <div>👨 Raj's phone reassembles → ASCII decode → <span style="color:var(--green)" id="recap-final">"Hi Raj!"</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV ARROWS -->
+<div class="nav-arrows">
+  <button class="btn2" onclick="prev()" id="pbtn" style="opacity:.3;pointer-events:none">← Previous</button>
+  <span class="step-ctr" id="sctr">Step 1 of 7</span>
+  <button class="btn2" onclick="next()" id="nbtn">Next →</button>
+</div>
+
+</div><!-- /wrap -->
+<footer>Computer Networking — Classroom Explainer &nbsp;|&nbsp; kpro.co.in</footer>
+
+<script>
+// ===== STATE =====
+let step = 0, total = 7;
+let msg = "Hi Raj!";
+const CHUNK = 4;
+
+const PCOLS = [
+  {c:'#4f9eff',bg:'rgba(79,158,255,0.12)',border:'#4f9eff'},
+  {c:'#22d3a5',bg:'rgba(34,211,165,0.12)',border:'#22d3a5'},
+  {c:'#fbbf24',bg:'rgba(251,191,36,0.12)',border:'#fbbf24'},
+  {c:'#f472b6',bg:'rgba(244,114,182,0.12)',border:'#f472b6'},
+  {c:'#a78bfa',bg:'rgba(167,139,250,0.12)',border:'#a78bfa'},
+];
+
+// ===== NAVIGATION =====
+function go(n){
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('on',i===n));
+  document.querySelectorAll('.snav').forEach((b,i)=>b.classList.toggle('on',i===n));
+  step=n;
+  document.getElementById('pbar').style.width=((n+1)/total*100)+'%';
+  document.getElementById('sctr').textContent='Step '+(n+1)+' of '+total;
+  const pb=document.getElementById('pbtn'), nb=document.getElementById('nbtn');
+  pb.style.opacity=n===0?'.3':'1'; pb.style.pointerEvents=n===0?'none':'auto';
+  nb.style.opacity=n===total-1?'.3':'1'; nb.style.pointerEvents=n===total-1?'none':'auto';
+
+  if(n===1) buildChars();
+  if(n===2) buildAscii();
+  if(n===3) buildBinary();
+  if(n===4) buildPackets();
+  if(n===6) buildReasm();
+}
+function next(){if(step<total-1)go(step+1);}
+function prev(){if(step>0)go(step-1);}
+
+// ===== MSG UPDATE =====
+function onMsg(){
+  msg = document.getElementById('msg-in').value || "Hi";
+  const pkts = getPkts();
+  document.getElementById('s-chars').textContent=msg.length;
+  document.getElementById('s-bytes').textContent=msg.length;
+  document.getElementById('s-bits').textContent=msg.length*8;
+  document.getElementById('s-pkts').textContent=pkts.length;
+  document.getElementById('wire-msg').textContent='"'+msg+'"';
+  // update recap
+  document.getElementById('recap-msg').textContent='"'+msg+'"';
+  document.getElementById('recap-chars').textContent=msg.length;
+  document.getElementById('recap-bits').textContent=msg.length*8;
+  document.getElementById('recap-pkts').textContent=pkts.length;
+  document.getElementById('recap-final').textContent='"'+msg+'"';
+  document.getElementById('priya-bubble').textContent=msg;
+}
+onMsg();
+
+// ===== CHARS =====
+function buildChars(){
+  const row = document.getElementById('char-row');
+  const split = document.getElementById('char-split-viz');
+  row.innerHTML=''; split.innerHTML='';
+  [...msg].forEach((ch,i)=>{
+    const col = PCOLS[i%PCOLS.length];
+    // tile
+    const d=document.createElement('div');d.className='ctile';
+    d.innerHTML=`<div class="cbox" style="background:${col.bg};border-color:${col.border};color:${col.c}">${ch===' '?'⎵':ch}</div><div class="cidx">#${i}</div>`;
+    row.appendChild(d);
+    // split viz
+    const s=document.createElement('span');
+    s.style.cssText=`display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:7px;background:${col.bg};border:1.5px solid ${col.border};color:${col.c};font-weight:700;font-size:15px;`;
+    s.textContent=ch===' '?'⎵':ch;
+    split.appendChild(s);
+    if(i<msg.length-1){const arr=document.createElement('span');arr.style.cssText='color:#1e304f;font-size:16px;';arr.textContent=' | ';split.appendChild(arr);}
+  });
+}
+
+// ===== ASCII =====
+function buildAscii(){
+  const tbody = document.getElementById('ascii-body');
+  tbody.innerHTML='';
+  [...msg].forEach((ch,i)=>{
+    const code=ch.charCodeAt(0);
+    const bin=code.toString(2).padStart(8,'0');
+    const hex=code.toString(16).toUpperCase().padStart(2,'0');
+    const col=PCOLS[i%PCOLS.length];
+    const bits=bin.split('').map(b=>`<div class="bit ${b==='1'?'b1':'b0'}">${b}</div>`).join('');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><div class="cchar" style="background:${col.bg};border-color:${col.border};color:${col.c}">${ch===' '?'⎵':ch}</div></td>
+      <td><span style="font-size:18px;font-weight:800;color:${col.c};font-family:var(--mono)">${code}</span></td>
+      <td style="color:var(--muted);font-family:var(--mono)">0x${hex}</td>
+      <td><div class="bits-row">${bits}</div></td>
+      <td style="font-size:11px;color:var(--muted)">${ch===' '?'Space character':ch==='!'?'Exclamation mark':ch===','?'Comma':'Printable ASCII'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ===== BINARY =====
+function buildBinary(){
+  const stream=[...msg].map(ch=>ch.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');
+  const doubled=stream+' '+stream+' ';
+  document.getElementById('stream-txt').textContent=doubled;
+
+  const bs=document.getElementById('byte-stream');
+  bs.innerHTML='';
+  [...msg].forEach((ch,i)=>{
+    const code=ch.charCodeAt(0);
+    const bin=code.toString(2).padStart(8,'0');
+    const col=PCOLS[i%PCOLS.length];
+    const d=document.createElement('div');
+    d.className='bblock';
+    d.style.borderColor=col.border;
+    d.innerHTML=`<div class="blabel">#${i} · ASCII ${code}</div>
+      <div class="bchar" style="color:${col.c}">${ch===' '?'⎵':ch}</div>
+      <div class="bbits" style="color:${col.c};opacity:.85">${bin}</div>`;
+    d.onclick=()=>{
+      document.querySelectorAll('.bblock').forEach(x=>x.classList.remove('sel'));
+      d.classList.add('sel');
+      showBit(ch,code,bin,col);
+    };
+    bs.appendChild(d);
+  });
+}
+
+function showBit(ch,code,bin,col){
+  document.getElementById('bit-detail').style.display='block';
+  const bv=document.getElementById('bit-vis');
+  bv.innerHTML='';
+  const powers=[128,64,32,16,8,4,2,1];
+  bin.split('').forEach((b,i)=>{
+    const w=document.createElement('div');
+    w.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;';
+    const bd=document.createElement('div');bd.className=`bit ${b==='1'?'b1':'b0'} bpop`;bd.textContent=b;
+    const pw=document.createElement('div');pw.style.cssText='font-size:8px;color:var(--muted);font-family:var(--mono)';pw.textContent='2^'+(7-i);
+    w.appendChild(bd);w.appendChild(pw);bv.appendChild(w);
+  });
+  const actives=bin.split('').map((b,i)=>b==='1'?powers[i]:0).filter(x=>x>0);
+  const label=ch===' '?'Space':ch;
+  document.getElementById('bit-math').innerHTML=
+    `'${label}' → ASCII decimal: <span style="color:${col.c}">${code}</span><br>`+
+    `Binary: <span style="color:var(--accent)">${bin}</span><br>`+
+    `Verify: ${actives.join(' + ')} = <span style="color:var(--green)">${code} ✓</span><br>`+
+    `Hex: 0x${code.toString(16).toUpperCase().padStart(2,'0')} &nbsp;|&nbsp; In wire: ${bin.split('').map(b=>b==='1'?'⚡':'○').join(' ')}`;
+}
+
+// ===== PACKETS =====
+function getPkts(){
+  const p=[];
+  for(let i=0;i<msg.length;i+=CHUNK){
+    const chunk=msg.slice(i,i+CHUNK);
+    const hex=[...chunk].map(c=>c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')).join(' ');
+    const bin=[...chunk].map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join(' ');
+    p.push({id:i/CHUNK+1,data:chunk,hex,bin,offset:i});
+  }
+  return p.length?p:[{id:1,data:msg,hex:'',bin:'',offset:0}];
+}
+
+function buildPackets(){
+  const pkts=getPkts();
+  document.getElementById('pkt-count-lbl').textContent=pkts.length;
+  document.getElementById('payload-disp').textContent=[...msg.slice(0,4)].map(c=>c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')).join(' ')+(msg.length>4?'…':'');
+  document.getElementById('seq-disp').textContent='0x'+Math.floor(Math.random()*0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+
+  const g=document.getElementById('pkts-grid');g.innerHTML='';
+  pkts.forEach((p,i)=>{
+    const col=PCOLS[i%PCOLS.length];
+    const d=document.createElement('div');d.className='pcard';
+    d.style.borderColor=col.border;
+    d.innerHTML=`
+      <div class="pcard-top" style="background:${col.bg}">
+        <span style="font-weight:800;color:${col.c};font-family:var(--mono)">PKT #${p.id}</span>
+        <span style="color:var(--muted);font-size:10px">${p.data.length+40} bytes</span>
+      </div>
+      <div class="pcard-body">
+        <div style="font-size:9px;color:var(--muted);margin-bottom:4px;font-family:var(--mono)">20B IP | 20B TCP | payload | CRC</div>
+        <div class="ppayload" style="color:${col.c};font-size:13px;font-weight:700;">"${p.data}"</div>
+        <div style="font-size:9px;color:var(--muted);margin-bottom:3px;font-family:var(--mono)">Hex: ${p.hex}</div>
+        <div class="pbin">${p.bin}</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:6px;font-family:var(--mono)">Seq: ${p.offset} | Frag ${p.id}/${pkts.length}</div>
+      </div>`;
+    g.appendChild(d);
+  });
+}
+
+// ===== ROUTING =====
+const RNODES=[
+  {x:70,y:140},{x:215,y:80},{x:215,y:200},
+  {x:355,y:60},{x:355,y:140},{x:355,y:220},
+  {x:480,y:100},{x:480,y:180},
+  {x:620,y:80},{x:620,y:160},{x:620,y:230},
+  {x:820,y:140}
+];
+const RPATHS=[
+  [0,1,3,6,8,11],[0,1,4,6,9,11],[0,2,5,7,10,11],[0,2,4,7,9,11],[0,1,3,6,9,11]
+];
+const PKCOLS=['#fbbf24','#4f9eff','#f472b6','#22d3a5','#a78bfa'];
+let ranims=[],rrunning=false,ttl=64,raf=null;
+
+function startRoute(){
+  if(rrunning)return;
+  rrunning=true;ttl=64;
+  const pkts=getPkts();
+  const cnt=Math.min(pkts.length,5);
+  const spd=parseFloat(document.getElementById('spd').value);
+  ranims=[];
+  for(let i=0;i<cnt;i++){
+    ranims.push({i,path:RPATHS[i%RPATHS.length],seg:0,t:0,delay:i*25/spd,done:false,cx:RNODES[0].x,cy:RNODES[0].y,spd});
+  }
+  document.getElementById('rstatus').textContent='Routing '+cnt+' packets…';
+  animRoute();
+}
+
+function animRoute(){
+  const svg=document.getElementById('mpkts');svg.innerHTML='';
+  let allDone=true;
+  const W=document.getElementById('rsvg').getBoundingClientRect().width||900;
+  const scale=W/900;
+
+  ranims.forEach(m=>{
+    if(m.done)return;
+    if(m.delay-->0){allDone=false;return;}
+    allDone=false;m.t+=0.02*m.spd;
+    if(m.t>=1){m.t=0;m.seg++;ttl=Math.max(0,ttl-1);document.getElementById('ttl-txt').textContent=ttl;
+      if(m.seg>=m.path.length-1){m.done=true;return;}
+    }
+    const a=RNODES[m.path[m.seg]],b=RNODES[m.path[m.seg+1]];
+    m.cx=a.x+(b.x-a.x)*m.t; m.cy=a.y+(b.y-a.y)*m.t;
+  });
+
+  ranims.filter(m=>!m.done&&m.cx!==undefined).forEach(m=>{
+    const col=PKCOLS[m.i%PKCOLS.length];
+    const ns='http://www.w3.org/2000/svg';
+    const g=document.createElementNS(ns,'g');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',m.cx);c.setAttribute('cy',m.cy);c.setAttribute('r','10');
+    c.setAttribute('fill',col+'33');c.setAttribute('stroke',col);c.setAttribute('stroke-width','2');
+    const t=document.createElementNS(ns,'text');
+    t.setAttribute('x',m.cx);t.setAttribute('y',m.cy+4);
+    t.setAttribute('text-anchor','middle');t.setAttribute('fill',col);
+    t.setAttribute('font-size','8');t.setAttribute('font-family','JetBrains Mono');
+    t.setAttribute('font-weight','700');t.textContent=m.i+1;
+    g.appendChild(c);g.appendChild(t);svg.appendChild(g);
+  });
+
+  if(allDone){
+    rrunning=false;
+    document.getElementById('rstatus').textContent='✓ All packets reached Raj at 203.0.113.45!';
+    return;
+  }
+  raf=requestAnimationFrame(animRoute);
+}
+
+function resetRoute(){
+  if(raf)cancelAnimationFrame(raf);
+  rrunning=false;ttl=64;
+  document.getElementById('mpkts').innerHTML='';
+  document.getElementById('rstatus').textContent='Press Send Packets to animate the journey';
+  document.getElementById('ttl-txt').textContent='64';
+}
+
+// ===== REASSEMBLY =====
+function buildReasm(){
+  const pkts=getPkts();
+  const shuffled=[...pkts].sort(()=>Math.random()-.5);
+  document.getElementById('raj-bubble').textContent='…waiting…';
+  document.getElementById('raj-bubble').style.opacity='.3';
+  document.getElementById('final-box').classList.remove('show');
+
+  const ar=document.getElementById('arr-row');ar.innerHTML='';
+  shuffled.forEach(p=>{
+    const col=PCOLS[(p.id-1)%PCOLS.length];
+    const d=document.createElement('div');d.className='achip';
+    d.style.cssText=`background:${col.bg};border-color:${col.border};color:${col.c}`;
+    d.textContent=`PKT#${p.id} "${p.data}"`;
+    ar.appendChild(d);
+  });
+
+  const sr=document.getElementById('slots-row');sr.innerHTML='';
+  pkts.forEach(p=>{
+    const s=document.createElement('div');s.className='slot';s.id='slot-'+p.id;
+    s.textContent='#'+p.id+' ?';sr.appendChild(s);
+  });
+}
+
+function doReasm(){
+  const pkts=getPkts();
+  pkts.forEach((p,i)=>{
+    const col=PCOLS[i%PCOLS.length];
+    setTimeout(()=>{
+      const s=document.getElementById('slot-'+p.id);
+      if(s){s.classList.add('filled');s.style.cssText=`background:${col.bg};border-color:${col.border};color:${col.c};border-style:solid`;s.textContent=`#${p.id} "${p.data}"`;}
+    },i*380);
+  });
+  setTimeout(()=>{
+    document.getElementById('final-txt').textContent=msg;
+    document.getElementById('final-info').textContent=pkts.length+' packets received → binary decoded → ASCII decoded → "'+msg+'"';
+    document.getElementById('final-box').classList.add('show');
+    document.getElementById('raj-bubble').textContent=msg;
+    document.getElementById('raj-bubble').style.opacity='1';
+  },pkts.length*380+300);
+}
+function resetReasm(){buildReasm();}
+</script>
+</body>
+</html>
