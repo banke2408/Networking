@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Upload with Data Transfer Progress</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 0 16px;
+      }
+      .row {
+        margin: 12px 0;
+      }
+      progress {
+        width: 100%;
+        height: 20px;
+      }
+      #status {
+        margin-top: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Upload File</h1>
+    <p>Select a file and click upload to see how data is transferred.</p>
+
+    <div class="row">
+      <label for="uploadUrl">Upload URL</label><br />
+      <input id="uploadUrl" type="text" value="https://httpbin.org/post" style="width: 100%" />
+    </div>
+
+    <div class="row">
+      <input id="fileInput" type="file" />
+      <button id="uploadBtn" type="button">Upload</button>
+    </div>
+
+    <div class="row">
+      <progress id="progressBar" max="100" value="0"></progress>
+      <div id="percent">0%</div>
+      <div id="status">Waiting for upload...</div>
+    </div>
+
+    <script>
+      const fileInput = document.getElementById("fileInput");
+      const uploadBtn = document.getElementById("uploadBtn");
+      const uploadUrl = document.getElementById("uploadUrl");
+      const progressBar = document.getElementById("progressBar");
+      const percent = document.getElementById("percent");
+      const status = document.getElementById("status");
+
+      uploadBtn.addEventListener("click", () => {
+        const file = fileInput.files[0];
+        if (!file) {
+          status.textContent = "Please choose a file first.";
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", uploadUrl.value.trim());
+
+        xhr.upload.onprogress = (event) => {
+          if (!event.lengthComputable) return;
+          const value = Math.round((event.loaded / event.total) * 100);
+          progressBar.value = value;
+          percent.textContent = value + "%";
+          status.textContent = `Transferred ${event.loaded} of ${event.total} bytes`;
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            status.textContent = "Upload complete.";
+          } else {
+            status.textContent = `Upload failed (HTTP ${xhr.status}).`;
+          }
+        };
+
+        xhr.onerror = () => {
+          status.textContent = "Network error during upload.";
+        };
+
+        progressBar.value = 0;
+        percent.textContent = "0%";
+        status.textContent = "Uploading...";
+        xhr.send(formData);
+      });
+    </script>
+  </body>
+</html>
