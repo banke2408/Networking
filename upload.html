@@ -29,7 +29,7 @@
 
     <div class="row">
       <label for="uploadUrl">Upload URL</label><br />
-      <input id="uploadUrl" type="text" value="https://httpbin.org/post" style="width: 100%" />
+      <input id="uploadUrl" type="url" value="https://httpbin.org/post" style="width: 100%" />
     </div>
 
     <div class="row">
@@ -39,7 +39,7 @@
     </div>
 
     <div class="row">
-      <progress id="progressBar" max="100" value="0" aria-valuenow="0"></progress>
+      <progress id="progressBar" max="100" value="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></progress>
       <div id="percent" aria-live="polite">0%</div>
       <div id="status" role="alert" aria-live="assertive">Waiting for upload...</div>
     </div>
@@ -84,7 +84,7 @@
         xhr.open("POST", parsedUrl.toString());
 
         xhr.upload.onprogress = (event) => {
-          if (!event.lengthComputable) return;
+          if (!event.lengthComputable || event.total <= 0) return;
           const value = Math.round((event.loaded / event.total) * 100);
           progressBar.value = value;
           progressBar.setAttribute("aria-valuenow", String(value));
