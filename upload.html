@@ -33,6 +33,7 @@
     </div>
 
     <div class="row">
+      <label for="fileInput">Choose file</label><br />
       <input id="fileInput" type="file" />
       <button id="uploadBtn" type="button">Upload</button>
     </div>
@@ -60,7 +61,7 @@
           return;
         }
         if (file.size > maxFileSizeBytes) {
-          status.textContent = "File is too large. Maximum allowed size is 10 MB.";
+          status.textContent = `File is too large. Maximum allowed size is ${MAX_FILE_SIZE_MB} MB.`;
           return;
         }
 
