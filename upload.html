@@ -88,7 +88,7 @@
           const value = Math.round((event.loaded / event.total) * 100);
           progressBar.value = value;
           progressBar.setAttribute("aria-valuenow", String(value));
-          percent.textContent = value + "%";
+          percent.textContent = `${value}%`;
           status.textContent = `Transferred ${event.loaded} of ${event.total} bytes`;
         };
 
