@@ -38,7 +38,7 @@
     </div>
 
     <div class="row">
-      <progress id="progressBar" max="100" value="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></progress>
+      <progress id="progressBar" max="100" value="0" aria-valuenow="0"></progress>
       <div id="percent" aria-live="polite">0%</div>
       <div id="status" role="alert" aria-live="assertive">Waiting for upload...</div>
     </div>
@@ -50,7 +50,8 @@
       const progressBar = document.getElementById("progressBar");
       const percent = document.getElementById("percent");
       const status = document.getElementById("status");
-      const maxFileSizeBytes = 10 * 1024 * 1024;
+      const MAX_FILE_SIZE_MB = 10;
+      const maxFileSizeBytes = MAX_FILE_SIZE_MB * 1024 * 1024;
 
       uploadBtn.addEventListener("click", () => {
         const file = fileInput.files[0];
@@ -103,6 +104,7 @@
         };
 
         progressBar.value = 0;
+        progressBar.setAttribute("aria-valuenow", "0");
         percent.textContent = "0%";
         status.textContent = "Uploading...";
         xhr.send(formData);
