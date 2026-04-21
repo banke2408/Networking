@@ -50,6 +50,7 @@
       const progressBar = document.getElementById("progressBar");
       const percent = document.getElementById("percent");
       const status = document.getElementById("status");
+      const maxFileSizeBytes = 10 * 1024 * 1024;
 
       uploadBtn.addEventListener("click", () => {
         const file = fileInput.files[0];
@@ -57,7 +58,6 @@
           status.textContent = "Please choose a file first.";
           return;
         }
-        const maxFileSizeBytes = 10 * 1024 * 1024;
         if (file.size > maxFileSizeBytes) {
           status.textContent = "File is too large. Maximum allowed size is 10 MB.";
           return;
@@ -98,7 +98,7 @@
         };
 
         xhr.onerror = () => {
-          status.textContent = "Network error during upload.";
+          status.textContent = "Network error during upload. Please check your connection and try again.";
         };
 
         progressBar.value = 0;
