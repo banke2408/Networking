@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSI Model — Data Transfer Visualizer</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #020408;
+  --bg2: #050c14;
+  --surface: #080f1a;
+  --surface2: #0c1624;
+  --border: #0e2040;
+  --l7: #ff6b9d; --l7d: rgba(255,107,157,0.12);
+  --l6: #c77dff; --l6d: rgba(199,125,255,0.12);
+  --l5: #4cc9f0; --l5d: rgba(76,201,240,0.12);
+  --l4: #4ade80; --l4d: rgba(74,222,128,0.12);
+  --l3: #fbbf24; --l3d: rgba(251,191,36,0.12);
+  --l2: #fb923c; --l2d: rgba(251,146,60,0.12);
+  --l1: #f87171; --l1d: rgba(248,113,113,0.12);
+  --text: #e2e8f0; --muted: #4a6080;
+  --mono: 'Share Tech Mono', monospace;
+  --display: 'Orbitron', monospace;
+  --body: 'Exo 2', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Scanline overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Grid bg */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(14,32,64,0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14,32,64,0.4) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+/* ===== HERO ===== */
+.hero {
+  text-align: center;
+  padding: 52px 0 36px;
+  position: relative;
+}
+.hero-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px; height: 200px;
+  background: radial-gradient(ellipse, rgba(76,201,240,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .3em;
+  color: var(--l5);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  opacity: .8;
+}
+.hero h1 {
+  font-family: var(--display);
+  font-size: clamp(20px, 4.5vw, 48px);
+  font-weight: 900;
+  letter-spacing: .05em;
+  line-height: 1.1;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #fff 0%, var(--l5) 40%, var(--l6) 80%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.8;
+  font-weight: 300;
+}
+
+/* ===== TABS ===== */
+.tabs {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 32px 0 28px;
+}
+.tab {
+  padding: 8px 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .2s;
+  text-transform: uppercase;
+}
+.tab:hover { border-color: var(--l5); color: var(--l5); }
+.tab.on { background: rgba(76,201,240,0.1); border-color: var(--l5); color: var(--l5); }
+
+/* ===== PANELS ===== */
+.panel { display: none; animation: fadeUp .4s ease; }
+.panel.on { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+/* ===== SECTION CARD ===== */
+.scard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 30px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.scard-glow {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+}
+.ctag { font-family: var(--mono); font-size: 9px; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 6px; opacity: .7; }
+.ctitle { font-family: var(--display); font-size: 18px; font-weight: 700; letter-spacing: .04em; margin-bottom: 8px; }
+.csub { font-size: 13px; color: var(--muted); line-height: 1.8; margin-bottom: 20px; font-weight: 300; }
+
+/* ===== INFO BOX ===== */
+.infobox {
+  display: flex; gap: 10px;
+  background: rgba(76,201,240,0.06);
+  border: 1px solid rgba(76,201,240,0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px; color: #7dd3fc;
+  line-height: 1.7; margin: 14px 0;
+  font-weight: 300;
+}
+
+/* ===== OSI STACK ===== */
+.osi-wrapper {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0 16px;
+  margin: 20px 0;
+  align-items: stretch;
+}
+
+.stack-col { display: flex; flex-direction: column; gap: 6px; }
+.stack-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 10px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+/* Layer row */
+.layer {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0;
+  cursor: pointer;
+  transition: all .2s;
+  overflow: hidden;
+  position: relative;
+}
+.layer:hover { transform: translateX(0) scale(1.01); }
+.layer.sender:hover { transform: translateX(2px); }
+.layer.receiver:hover { transform: translateX(-2px); }
+
+.layer-inner {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.layer-num {
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 700;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid;
+}
+.layer-info { flex: 1; min-width: 0; }
+.layer-name {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.layer-aka { font-family: var(--mono); font-size: 9px; color: var(--muted); margin-top: 2px; }
+.layer-pdu {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  flex-shrink: 0;
+  opacity: .8;
+}
+
+/* Encapsulation data block */
+.enc-block {
+  padding: 6px 14px 8px;
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  font-family: var(--mono);
+  font-size: 9px;
+  flex-wrap: wrap;
+  min-height: 0;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height .4s ease, padding .4s ease;
+}
+.layer.active .enc-block { max-height: 60px; }
+
+.enc-seg {
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+  font-size: 8px;
+  white-space: nowrap;
+}
+
+/* Middle arrow column */
+.middle-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding-top: 44px;
+}
+.arrow-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 54px;
+}
+.arrow-circle {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  background: var(--surface2);
+  cursor: pointer;
+  transition: all .2s;
+}
+.arrow-circle:hover { border-color: var(--l5); }
+
+/* ===== INTERACTIVE DEMO ===== */
+.demo-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin: 20px 0;
+}
+@media(max-width:700px){ .demo-container { grid-template-columns: 1fr; } }
+
+.demo-side {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.demo-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--display);
+  font-size: 11px;
+  letter-spacing: .06em;
+}
+.device-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+/* Animation canvas area */
+.anim-area {
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+#anim-canvas {
+  display: block;
+  width: 100%;
+}
+
+/* Layer strips in demo */
+.demo-layers { display: flex; flex-direction: column; gap: 2px; padding: 8px; }
+.dlayer {
+  border-radius: 7px;
+  padding: 7px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  border: 1px solid transparent;
+  transition: all .3s;
+  cursor: default;
+  min-height: 38px;
+}
+.dlayer.active-layer {
+  border-color: currentColor !important;
+  transform: scaleX(1.01);
+}
+.dlayer-num {
+  font-family: var(--display);
+  font-size: 9px;
+  font-weight: 700;
+  width: 18px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.dlayer-name { font-weight: 600; font-size: 10px; min-width: 70px; }
+.dlayer-action { flex: 1; font-size: 9px; color: var(--muted); }
+.dlayer-pdu {
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+  opacity: .7;
+}
+
+/* Packet visualizer */
+.pkt-viz {
+  display: flex;
+  gap: 2px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+  min-height: 48px;
+  align-items: center;
+}
+.pkt-seg {
+  flex-shrink: 0;
+  padding: 4px 7px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 9px;
+  border: 1px solid;
+  white-space: nowrap;
+  transition: all .3s;
+}
+
+/* Controls */
+.ctrl-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 16px 0;
+}
+.btn {
+  padding: 10px 20px;
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .2s;
+  text-transform: uppercase;
+}
+.btn-primary { background: linear-gradient(135deg, var(--l5), var(--l6)); color: #000; }
+.btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 9px 16px;
+  font-family: var(--mono);
+  font-size: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-outline:hover { border-color: var(--l5); color: var(--l5); }
+
+.speed-sel {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  outline: none;
+}
+.status-box {
+  flex: 1;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--l4);
+  min-width: 180px;
+}
+
+/* ===== LAYER DETAIL PANEL ===== */
+.layer-detail {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 26px;
+  margin: 16px 0;
+  display: none;
+}
+.layer-detail.show { display: block; animation: fadeUp .3s ease; }
+.ld-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.ld-num {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 900;
+  line-height: 1;
+}
+.ld-title { font-family: var(--display); font-size: 16px; font-weight: 700; letter-spacing: .06em; }
+.ld-subtitle { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 3px; }
+
+.ld-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.ld-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.ld-box-label { font-family: var(--mono); font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
+.ld-box-val { font-size: 13px; line-height: 1.6; font-weight: 300; }
+
+.protocols-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.proto-tag {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  border: 1px solid;
+}
+
+/* ===== ENCAPSULATION VISUAL ===== */
+.encap-visual {
+  margin: 20px 0;
+  overflow-x: auto;
+}
+.encap-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-width: 600px;
+}
+.encap-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  width: 100px;
+  flex-shrink: 0;
+  text-align: right;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.encap-blocks {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+.eblk {
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  border: 1px solid;
+  text-align: center;
+  transition: all .3s;
+  flex-shrink: 0;
+}
+.eblk.data { flex: 1; }
+.eblk.added { animation: blkIn .4s ease; }
+@keyframes blkIn { from { opacity:0; transform: scaleX(0.5); } to { opacity:1; transform: scaleX(1); } }
+
+/* MEDIA */
+.net-diagram {
+  width: 100%;
+  height: 200px;
+  position: relative;
+  margin: 16px 0;
+}
+#net-svg { width: 100%; height: 100%; }
+
+/* ===== LAYER EXPLORER ===== */
+.explorer-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin: 20px 0;
+}
+@media(max-width: 700px) {
+  .explorer-grid { grid-template-columns: repeat(3, 1fr); }
+  .osi-wrapper { grid-template-columns: 1fr; }
+  .middle-col { display: none; }
+}
+.expl-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  background: var(--surface);
+}
+.expl-card:hover { transform: translateY(-3px); }
+.expl-card.on { }
+.expl-num { font-family: var(--display); font-size: 20px; font-weight: 900; }
+.expl-name { font-family: var(--display); font-size: 8px; letter-spacing: .05em; margin-top: 4px; }
+.expl-pdu { font-family: var(--mono); font-size: 8px; color: var(--muted); margin-top: 3px; }
+
+footer {
+  text-align: center;
+  padding: 30px 0 18px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .1em;
+  border-top: 1px solid var(--border);
+  margin-top: 20px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-label">Computer Networking — Interactive Explainer</div>
+  <h1>OSI MODEL<br>Data Transfer</h1>
+  <p>How data travels from Priya's laptop to Raj's laptop through all 7 layers of the OSI model — encapsulated on the way down, decapsulated on the way up.</p>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab on" onclick="goTab(0)">OSI Stack</button>
+  <button class="tab" onclick="goTab(1)">Live Animation</button>
+  <button class="tab" onclick="goTab(2)">Encapsulation</button>
+  <button class="tab" onclick="goTab(3)">Layer Explorer</button>
+</div>
+
+<!-- ========================= TAB 0: OSI STACK ========================= -->
+<div class="panel on" id="tab0">
+  <div class="scard">
+    <div class="scard-glow" style="background:linear-gradient(90deg,transparent,var(--l5),transparent);"></div>
+    <div class="ctag" style="color:var(--l5)">OSI Reference Model</div>
+    <div class="ctitle">7 Layers — Both Sides</div>
+    <div class="csub">The sender passes data DOWN through 7 layers (adding headers). The receiver passes data UP through 7 layers (removing headers). Click any layer to learn more.</div>
+
+    <div class="infobox">
+      <span>💡</span>
+      <span><strong>Mnemonic to remember layers 7→1:</strong> <span style="color:#fff">"All People Seem To Need Data Processing"</span> → Application, Presentation, Session, Transport, Network, Data Link, Physical.</span>
+    </div>
+
+    <div class="osi-wrapper">
+      <!-- SENDER -->
+      <div class="stack-col">
+        <div class="stack-label" style="color:var(--l7);">📱 SENDER (Priya's Laptop)</div>
+        <div id="sender-layers"></div>
+      </div>
+
+      <!-- MIDDLE -->
+      <div class="middle-col" id="middle-arrows"></div>
+
+      <!-- RECEIVER -->
+      <div class="stack-col">
+        <div class="stack-label" style="color:var(--l4);">💻 RECEIVER (Raj's Laptop)</div>
+        <div id="receiver-layers"></div>
+      </div>
+    </div>
+
+    <!-- Layer detail popup -->
+    <div class="layer-detail" id="layer-detail"></div>
+  </div>
+</div>
+
+<!-- ========================= TAB 1: LIVE ANIMATION ========================= -->
+<div class="panel" id="tab1">
+  <div class="scard">
+    <div class="scard-glow" style="background:linear-gradient(90deg,transparent,var(--l4),transparent);"></div>
+    <div class="ctag" style="color:var(--l4)">Live Simulation</div>
+    <div class="ctitle">Watch Data Flow Through All 7 Layers</div>
+    <div class="csub">Press "Transmit" to watch data travel down Priya's OSI stack, across the network, and up Raj's OSI stack in real time.</div>
+
+    <div class="ctrl-row">
+      <button class="btn btn-primary" onclick="startAnim()">▶ Transmit Data</button>
+      <button class="btn-outline" onclick="resetAnim()">↺ Reset</button>
+      <select class="speed-sel" id="anim-speed">
+        <option value="800">Normal speed</option>
+        <option value="400">Fast</option>
+        <option value="1600">Slow (classroom)</option>
+      </select>
+      <div class="status-box" id="anim-status">Ready — Press Transmit</div>
+    </div>
+
+    <div class="demo-container">
+      <!-- Sender -->
+      <div class="demo-side">
+        <div class="demo-header" style="border-color:rgba(255,107,157,0.3);">
+          <div class="device-dot" style="background:var(--l7)"></div>
+          <span style="color:var(--l7);font-family:var(--display);">PRIYA'S LAPTOP</span>
+          <span style="color:var(--muted);font-size:9px;margin-left:auto;font-family:var(--mono);">192.168.1.10</span>
+        </div>
+        <div class="demo-layers" id="sender-demo"></div>
+        <div class="pkt-viz" id="sender-pkt">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Packet builds here as data goes DOWN ↓</span>
+        </div>
+      </div>
+      <!-- Receiver -->
+      <div class="demo-side">
+        <div class="demo-header" style="border-color:rgba(74,222,128,0.3);">
+          <div class="device-dot" style="background:var(--l4)"></div>
+          <span style="color:var(--l4);font-family:var(--display);">RAJ'S LAPTOP</span>
+          <span style="color:var(--muted);font-size:9px;margin-left:auto;font-family:var(--mono);">203.0.113.45</span>
+        </div>
+        <div class="demo-layers" id="receiver-demo"></div>
+        <div class="pkt-viz" id="receiver-pkt">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Packet strips here as data goes UP ↑</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Network transit diagram -->
+    <div class="scard" style="margin-top:0;">
+      <div class="ctag" style="color:var(--l3)">Physical Network Path</div>
+      <div class="net-diagram">
+        <svg id="net-svg" viewBox="0 0 900 180">
+          <defs>
+            <marker id="arw" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0 0 L6 3 L0 6 Z" fill="#0e2040"/>
+            </marker>
+          </defs>
+          <!-- cables -->
+          <g stroke="#0e2040" stroke-width="2" fill="none" marker-end="url(#arw)">
+            <line x1="110" y1="90" x2="210" y2="90"/>
+            <line x1="310" y1="90" x2="400" y2="90"/>
+            <line x1="400" y1="90" x2="490" y2="90"/>
+            <line x1="590" y1="90" x2="680" y2="90"/>
+            <line x1="780" y1="90" x2="860" y2="90"/>
+          </g>
+          <!-- Devices -->
+          <!-- Priya -->
+          <rect x="20" y="60" width="80" height="60" rx="8" fill="#0c1624" stroke="#ff6b9d" stroke-width="1.5"/>
+          <text x="60" y="85" text-anchor="middle" fill="#ff6b9d" font-size="9" font-family="Orbitron" font-weight="700">PRIYA</text>
+          <text x="60" y="100" text-anchor="middle" fill="#4a6080" font-size="7" font-family="Share Tech Mono">192.168.1.10</text>
+          <text x="60" y="113" text-anchor="middle" fill="#4a6080" font-size="7" font-family="Share Tech Mono">ALL 7 LAYERS</text>
+          <!-- Switch -->
+          <rect x="220" y="72" width="80" height="36" rx="6" fill="#0c1624" stroke="#0e2040" stroke-width="1"/>
+          <text x="260" y="88" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="Orbitron">SWITCH</text>
+          <text x="260" y="100" text-anchor="middle" fill="#4a6080" font-size="7" font-family="Share Tech Mono">L2 Device</text>
+          <!-- Router 1 -->
+          <rect x="400" y="65" width="90" height="50" rx="8" fill="#110828" stroke="#fbbf24" stroke-width="1"/>
+          <text x="445" y="86" text-anchor="middle" fill="#fbbf24" font-size="8" font-family="Orbitron">ROUTER</text>
+          <text x="445" y="97" text-anchor="middle" fill="#4a6080" font-size="6" font-family="Share Tech Mono">10.0.0.1</text>
+          <text x="445" y="108" text-anchor="middle" fill="#4a6080" font-size="6" font-family="Share Tech Mono">L3 Device</text>
+          <!-- Switch 2 -->
+          <rect x="600" y="72" width="80" height="36" rx="6" fill="#0c1624" stroke="#0e2040" stroke-width="1"/>
+          <text x="640" y="88" text-anchor="middle" fill="#94a3b8" font-size="8" font-family="Orbitron">SWITCH</text>
+          <text x="640" y="100" text-anchor="middle" fill="#4a6080" font-size="7" font-family="Share Tech Mono">L2 Device</text>
+          <!-- Raj -->
+          <rect x="800" y="60" width="80" height="60" rx="8" fill="#0c1624" stroke="#4ade80" stroke-width="1.5"/>
+          <text x="840" y="85" text-anchor="middle" fill="#4ade80" font-size="9" font-family="Orbitron" font-weight="700">RAJ</text>
+          <text x="840" y="100" text-anchor="middle" fill="#4a6080" font-size="7" font-family="Share Tech Mono">203.0.113.45</text>
+          <text x="840" y="113" text-anchor="middle" fill="#4a6080" font-size="7" font-family="Share Tech Mono">ALL 7 LAYERS</text>
+          <!-- Labels -->
+          <text x="260" y="130" text-anchor="middle" fill="#4a6080" font-size="7" font-family="Share Tech Mono">Reads L1+L2 only</text>
+          <text x="445" y="130" text-anchor="middle" fill="#fbbf24" font-size="7" font-family="Share Tech Mono">Reads L1+L2+L3</text>
+          <text x="640" y="130" text-anchor="middle" fill="#4a6080" font-size="7" font-family="Share Tech Mono">Reads L1+L2 only</text>
+          <!-- moving packet -->
+          <circle id="net-packet" cx="-20" cy="90" r="8" fill="#4cc9f0" opacity="0"/>
+          <text id="net-pkt-txt" x="-20" y="93" text-anchor="middle" fill="#000" font-size="6" font-family="Share Tech Mono" font-weight="700">PKT</text>
+          <!-- cable labels -->
+          <text x="160" y="83" text-anchor="middle" fill="#0e2040" font-size="7" font-family="Share Tech Mono">Ethernet</text>
+          <text x="550" y="83" text-anchor="middle" fill="#0e2040" font-size="7" font-family="Share Tech Mono">Ethernet</text>
+          <text x="735" y="83" text-anchor="middle" fill="#0e2040" font-size="7" font-family="Share Tech Mono">Ethernet</text>
+          <text x="445" y="52" text-anchor="middle" fill="#fbbf24" font-size="7" font-family="Share Tech Mono">Internet (IP routing)</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= TAB 2: ENCAPSULATION ========================= -->
+<div class="panel" id="tab2">
+  <div class="scard">
+    <div class="scard-glow" style="background:linear-gradient(90deg,transparent,var(--l6),transparent);"></div>
+    <div class="ctag" style="color:var(--l6)">Data Encapsulation</div>
+    <div class="ctitle">Headers Added Layer by Layer</div>
+    <div class="csub">As data travels DOWN the sender's OSI stack, each layer wraps the data with its own header (and sometimes a trailer). This is called <strong>encapsulation</strong>. At the receiver, each layer peels off its header — <strong>decapsulation</strong>.</div>
+
+    <div class="infobox">
+      <span>🧅</span>
+      <span>Think of it like wrapping a letter in envelopes. Layer 7 puts the letter in an envelope. Layer 4 puts that in another envelope with a port number. Layer 3 adds another with IP addresses. Layer 2 adds the MAC address envelope. Each envelope is read and removed by the matching layer on the receiver side.</span>
+    </div>
+
+    <!-- Encapsulation diagram -->
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.1em;">SENDER — Adding headers going DOWN ↓</div>
+    <div class="encap-visual" id="encap-visual"></div>
+
+    <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin:20px 0 12px;text-transform:uppercase;letter-spacing:.1em;">RECEIVER — Removing headers going UP ↑</div>
+    <div class="encap-visual" id="decap-visual"></div>
+
+    <!-- PDU names -->
+    <div style="margin-top:20px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.1em;">PDU (Protocol Data Unit) names per layer:</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="pdu-tags"></div>
+    </div>
+
+    <!-- Header fields -->
+    <div style="margin-top:24px;padding:20px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;">
+      <div style="font-family:var(--display);font-size:12px;letter-spacing:.08em;margin-bottom:16px;color:var(--l5);">WHAT'S INSIDE EACH HEADER?</div>
+      <div id="header-fields" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================= TAB 3: LAYER EXPLORER ========================= -->
+<div class="panel" id="tab3">
+  <div class="scard">
+    <div class="scard-glow" style="background:linear-gradient(90deg,transparent,var(--l7),transparent);"></div>
+    <div class="ctag" style="color:var(--l7)">Layer Explorer</div>
+    <div class="ctitle">Click Any Layer to Explore</div>
+    <div class="csub">Deep-dive into each OSI layer — what it does, its protocols, the PDU name, real-world examples, and what hardware operates at that layer.</div>
+    <div class="explorer-grid" id="explorer-grid"></div>
+    <div id="explorer-detail"></div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<footer>OSI MODEL INTERACTIVE VISUALIZER &nbsp;|&nbsp; COMPUTER NETWORKING CLASSROOM TOOL</footer>
+
+<script>
+// ===== LAYER DATA =====
+const LAYERS = [
+  {
+    n:7, name:'Application', color:'var(--l7)', dark:'var(--l7d)',
+    pdu:'Data / Message', aka:'What the user sees',
+    role:'Provides network services directly to end-user applications. This is the layer YOU interact with.',
+    protocols:['HTTP','HTTPS','FTP','SMTP','DNS','DHCP','Telnet','SSH','POP3','IMAP'],
+    hardware:'End devices (laptops, phones)',
+    example:'You open Chrome and type google.com — HTTP request is created here.',
+    header:'HTTP Headers: GET / HTTP/1.1, Host: google.com, User-Agent: Chrome, Accept: text/html',
+    action:'Creates data (HTTP/HTTPS request)',
+    sends:'User Data',
+  },
+  {
+    n:6, name:'Presentation', color:'var(--l6)', dark:'var(--l6d)',
+    pdu:'Data', aka:'Translator & Encryptor',
+    role:'Translates data formats, handles encryption/decryption, and compression. Ensures both sides speak the same language.',
+    protocols:['SSL/TLS','JPEG','MPEG','ASCII','Unicode','GIF','PNG','MIME'],
+    hardware:'Software only (no dedicated hardware)',
+    example:'Encrypts your data with TLS before sending. Converts images to JPEG. Compresses data.',
+    header:'TLS Record: Content-Type, Version (TLS 1.3), Length, Encrypted Data',
+    action:'Encrypts + Compresses data',
+    sends:'Encrypted Data',
+  },
+  {
+    n:5, name:'Session', color:'var(--l5)', dark:'var(--l5d)',
+    pdu:'Data', aka:'Connection Manager',
+    role:'Opens, manages, and closes sessions (conversations) between two devices. Handles authentication and reconnection.',
+    protocols:['NetBIOS','RPC','PPTP','SIP','L2TP','PAP','NFS','SQL'],
+    hardware:'Software only',
+    example:'Manages your Netflix session. If connection drops, it resumes rather than restarting the entire stream.',
+    header:'Session ID, Sync Points, Dialog Control (Half/Full duplex)',
+    action:'Opens session, assigns Session ID',
+    sends:'Session Data',
+  },
+  {
+    n:4, name:'Transport', color:'var(--l4)', dark:'var(--l4d)',
+    pdu:'Segment (TCP) / Datagram (UDP)', aka:'Reliable Delivery',
+    role:'Segments data into pieces, ensures end-to-end delivery, handles flow control and error correction (TCP) or fast delivery (UDP).',
+    protocols:['TCP','UDP','SCTP','DCCP'],
+    hardware:'Firewalls, Load Balancers',
+    example:'TCP breaks your 5MB file into segments. If segment 47 is lost, TCP asks for retransmission of only that segment.',
+    header:'TCP: Src Port, Dst Port, Seq Number, Ack Number, Flags (SYN/ACK/FIN), Window Size, Checksum',
+    action:'Adds port numbers, segments data',
+    sends:'TCP Segment',
+  },
+  {
+    n:3, name:'Network', color:'var(--l3)', dark:'var(--l3d)',
+    pdu:'Packet', aka:'IP Address & Routing',
+    role:'Handles logical addressing (IP addresses) and routing. Decides the best path for data to travel across multiple networks.',
+    protocols:['IP (IPv4/IPv6)','ICMP','OSPF','BGP','RIP','ARP'],
+    hardware:'Routers, L3 Switches',
+    example:'Your packet gets Source IP 192.168.1.10, Destination IP 203.0.113.45. Routers read this to forward the packet across the internet.',
+    header:'IP Header: Version, TTL, Protocol, Src IP (192.168.1.10), Dst IP (203.0.113.45), Checksum',
+    action:'Adds IP addresses (routing)',
+    sends:'IP Packet',
+  },
+  {
+    n:2, name:'Data Link', color:'var(--l2)', dark:'var(--l2d)',
+    pdu:'Frame', aka:'MAC Address & Frames',
+    role:'Handles physical addressing (MAC addresses), error detection on the local network, and frames data for transmission.',
+    protocols:['Ethernet','Wi-Fi (802.11)','PPP','HDLC','ARP','MAC','LLC'],
+    hardware:'Switches, Network Interface Cards (NICs), Bridges',
+    example:'Adds your laptop\'s MAC address (AA:BB:CC:DD:EE:FF) and the router\'s MAC as destination. Switch reads this to forward to the right port.',
+    header:'Ethernet Frame: Preamble, Dst MAC, Src MAC, EtherType, Payload, FCS (CRC checksum)',
+    action:'Adds MAC addresses, frames data',
+    sends:'Ethernet Frame',
+  },
+  {
+    n:1, name:'Physical', color:'var(--l1)', dark:'var(--l1d)',
+    pdu:'Bits', aka:'0s and 1s on the wire',
+    role:'Converts frames to actual electrical signals, light pulses, or radio waves. Deals with cables, voltages, frequencies.',
+    protocols:['Ethernet (physical)','Wi-Fi','Bluetooth','USB','DSL','Fibre Optic','RS-232'],
+    hardware:'Hubs, Repeaters, Cables, Wi-Fi antennas, NICs, Modems',
+    example:'Your 0s and 1s become: high voltage = 1, low voltage = 0 in copper wire. Or light pulse ON = 1, OFF = 0 in fibre optic.',
+    header:'No header — raw bits: 01001000 01100101 01101100 01101100 01101111…',
+    action:'Converts to electrical/light signals',
+    sends:'Raw Bits (0101…)',
+  },
+];
+
+// ===== BUILD OSI STACK (TAB 0) =====
+function buildStack(){
+  const senderDiv = document.getElementById('sender-layers');
+  const receiverDiv = document.getElementById('receiver-layers');
+  const midDiv = document.getElementById('middle-arrows');
+  senderDiv.innerHTML = ''; receiverDiv.innerHTML = ''; midDiv.innerHTML = '';
+
+  LAYERS.forEach((L,i)=>{
+    // Sender layer (data goes DOWN = 7→1)
+    const sl = makeLayerCard(L,'sender');
+    sl.onclick = ()=>showLayerDetail(L);
+    senderDiv.appendChild(sl);
+
+    // Receiver layer (data goes UP = 1→7, show reversed visually)
+    const rl = makeLayerCard(L,'receiver');
+    rl.onclick = ()=>showLayerDetail(L);
+    receiverDiv.appendChild(rl);
+
+    // Arrow
+    const ar = document.createElement('div');
+    ar.className='arrow-row';
+    ar.innerHTML=`<div style="font-family:var(--mono);font-size:9px;color:${L.color};opacity:.5;">↕</div>`;
+    midDiv.appendChild(ar);
+  });
+}
+
+function makeLayerCard(L,side){
+  const d = document.createElement('div');
+  d.className=`layer ${side}`;
+  d.style.cssText=`background:${L.dark};border-color:${L.color}33;margin-bottom:5px;`;
+
+  const arrow = side==='sender'? '▼ adds header' : '▲ strips header';
+  const arrowColor = side==='sender'? L.color : L.color;
+
+  d.innerHTML=`<div class="layer-inner">
+    <div class="layer-num" style="color:${L.color};border-color:${L.color};">${L.n}</div>
+    <div class="layer-info">
+      <div class="layer-name" style="color:${L.color};">${L.name}</div>
+      <div class="layer-aka">${L.aka}</div>
+    </div>
+    <div class="layer-pdu" style="color:${L.color};border-color:${L.color}55;">${side==='sender'? L.pdu.split('/')[0].trim() : L.pdu.split('/')[0].trim()}</div>
+  </div>
+  <div class="enc-block" id="enc-${side}-${L.n}">
+    <span style="font-size:8px;color:${L.color};opacity:.7;">${side==='sender'?'Encapsulates:':'Decapsulates:'}</span>
+    <span class="enc-seg" style="color:${L.color};border-color:${L.color}55;background:${L.dark};">${L.sends}</span>
+  </div>`;
+  return d;
+}
+
+function showLayerDetail(L){
+  const d = document.getElementById('layer-detail');
+  d.classList.add('show');
+  d.style.borderColor=L.color+'44';
+  d.innerHTML=`
+    <div class="ld-header">
+      <div class="ld-num" style="color:${L.color};">${L.n}</div>
+      <div>
+        <div class="ld-title" style="color:${L.color};">${L.name} Layer</div>
+        <div class="ld-subtitle">${L.aka} · PDU: ${L.pdu}</div>
+      </div>
+    </div>
+    <div class="ld-grid">
+      <div class="ld-box"><div class="ld-box-label">What it does</div><div class="ld-box-val" style="color:${L.color};">${L.role}</div></div>
+      <div class="ld-box"><div class="ld-box-label">Real example</div><div class="ld-box-val">${L.example}</div></div>
+      <div class="ld-box"><div class="ld-box-label">Header added</div><div class="ld-box-val" style="font-family:var(--mono);font-size:11px;color:${L.color};">${L.header}</div></div>
+      <div class="ld-box"><div class="ld-box-label">Hardware</div><div class="ld-box-val">${L.hardware}</div></div>
+    </div>
+    <div class="ld-box-label">Protocols at this layer:</div>
+    <div class="protocols-wrap">${L.protocols.map(p=>`<span class="proto-tag" style="color:${L.color};border-color:${L.color}44;background:${L.dark};">${p}</span>`).join('')}</div>
+    <div style="text-align:right;margin-top:12px;"><button class="btn-outline" style="font-size:10px;" onclick="document.getElementById('layer-detail').classList.remove('show')">Close ✕</button></div>
+  `;
+  d.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ===== BUILD ANIMATION (TAB 1) =====
+function buildAnimDemo(){
+  const sd=document.getElementById('sender-demo');
+  const rd=document.getElementById('receiver-demo');
+  sd.innerHTML=''; rd.innerHTML='';
+
+  LAYERS.forEach(L=>{
+    sd.appendChild(makeDemoLayer(L,'sender'));
+    rd.appendChild(makeDemoLayer(L,'receiver'));
+  });
+}
+
+function makeDemoLayer(L,side){
+  const d=document.createElement('div');
+  d.className='dlayer';
+  d.id=`demo-${side}-${L.n}`;
+  d.style.cssText=`background:${L.dark};color:${L.color};`;
+  const arrow = side==='sender'?'▼':'▲';
+  d.innerHTML=`
+    <div class="dlayer-num">${L.n}</div>
+    <div class="dlayer-name" style="color:${L.color};">${L.name}</div>
+    <div class="dlayer-action" id="dact-${side}-${L.n}">${side==='sender'? L.action : L.action.replace('Adds','Reads').replace('Creates','Reads').replace('Opens','Closes').replace('Encrypts + Compresses','Decrypts + Decompresses').replace('Converts to electrical/light signals','Receives raw bits from cable')}</div>
+    <div class="dlayer-pdu" style="color:${L.color};border-color:${L.color}44;">${L.sends}</div>
+  `;
+  return d;
+}
+
+let animRunning=false, animTimer=null;
+
+function startAnim(){
+  if(animRunning) return;
+  resetAnim();
+  animRunning=true;
+  const speed = parseInt(document.getElementById('anim-speed').value);
+  const senderPkt=document.getElementById('sender-pkt');
+  const receiverPkt=document.getElementById('receiver-pkt');
+  senderPkt.innerHTML='';
+  receiverPkt.innerHTML='';
+
+  // Build sender segments (accumulate going down)
+  let segments=[];
+  const SENDER_ORDER = [...LAYERS]; // L7→L1
+  const RECEIVER_ORDER = [...LAYERS].reverse(); // L1→L7
+
+  let delay=0;
+
+  // Phase 1: Sender going DOWN (L7 to L1)
+  SENDER_ORDER.forEach((L,i)=>{
+    setTimeout(()=>{
+      // Highlight sender layer
+      document.querySelectorAll('.dlayer').forEach(x=>x.classList.remove('active-layer'));
+      const el=document.getElementById(`demo-sender-${L.n}`);
+      if(el) el.classList.add('active-layer');
+
+      document.getElementById('anim-status').textContent=`Layer ${L.n} (${L.name}): ${L.action}`;
+
+      // Add segment to packet viz
+      segments.unshift({color:L.color,dark:L.dark,label:L.n===7?'DATA':L.n===4?'TCP H':L.n===3?'IP H':L.n===2?'MAC H':L.n===1?'BITS':L.name.substring(0,4)+' H'});
+      senderPkt.innerHTML=segments.map(s=>
+        `<div class="pkt-seg" style="color:${s.color};border-color:${s.color}55;background:${s.dark};">${s.label}</div>`
+      ).join('')+'<span style="font-family:var(--mono);font-size:8px;color:var(--muted);padding:0 4px;">←header added</span>';
+
+    },delay);
+    delay+=speed;
+  });
+
+  // Phase 2: Network transit
+  setTimeout(()=>{
+    document.querySelectorAll('.dlayer').forEach(x=>x.classList.remove('active-layer'));
+    document.getElementById('anim-status').textContent='🌐 Packet traveling across network (Physical medium — copper/fibre/Wi-Fi)…';
+    animateNetPacket();
+  },delay);
+  delay+=speed*2;
+
+  // Phase 3: Receiver going UP (L1 to L7)
+  let rcvSegs=[...segments];
+  receiverPkt.innerHTML=rcvSegs.map(s=>
+    `<div class="pkt-seg" style="color:${s.color};border-color:${s.color}55;background:${s.dark};">${s.label}</div>`
+  ).join('');
+
+  RECEIVER_ORDER.forEach((L,i)=>{
+    setTimeout(()=>{
+      document.querySelectorAll('.dlayer').forEach(x=>x.classList.remove('active-layer'));
+      const el=document.getElementById(`demo-receiver-${L.n}`);
+      if(el) el.classList.add('active-layer');
+
+      document.getElementById('anim-status').textContent=`Layer ${L.n} (${L.name}): Reads & strips header → passes up`;
+
+      // Remove outermost segment
+      rcvSegs.shift();
+      receiverPkt.innerHTML=rcvSegs.map(s=>
+        `<div class="pkt-seg" style="color:${s.color};border-color:${s.color}55;background:${s.dark};">${s.label}</div>`
+      ).join('')+(rcvSegs.length>0?'<span style="font-family:var(--mono);font-size:8px;color:var(--muted);padding:0 4px;">header stripped ←</span>':'');
+
+      if(L.n===7){
+        receiverPkt.innerHTML=`<span style="font-family:var(--mono);font-size:10px;color:var(--l4);">✓ DATA DELIVERED TO RAJ'S APPLICATION</span>`;
+        document.getElementById('anim-status').textContent='✓ All 7 layers processed! Raj receives the data.';
+        animRunning=false;
+      }
+    },delay);
+    delay+=speed;
+  });
+}
+
+function animateNetPacket(){
+  const pkt=document.getElementById('net-packet');
+  const txt=document.getElementById('net-pkt-txt');
+  pkt.setAttribute('opacity','1');
+  const waypoints=[60,260,360,445,540,640,740,840];
+  let i=0;
+  const step=()=>{
+    if(i>=waypoints.length){pkt.setAttribute('opacity','0');txt.setAttribute('opacity','0');return;}
+    pkt.setAttribute('cx',waypoints[i]);
+    txt.setAttribute('x',waypoints[i]);
+    i++;
+    setTimeout(step,150);
+  };
+  step();
+}
+
+function resetAnim(){
+  if(animTimer) clearTimeout(animTimer);
+  animRunning=false;
+  document.querySelectorAll('.dlayer').forEach(x=>x.classList.remove('active-layer'));
+  document.getElementById('anim-status').textContent='Ready — Press Transmit';
+  document.getElementById('sender-pkt').innerHTML='<span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Packet builds here as data goes DOWN ↓</span>';
+  document.getElementById('receiver-pkt').innerHTML='<span style="font-family:var(--mono);font-size:10px;color:var(--muted);">Packet strips here as data goes UP ↑</span>';
+  document.getElementById('net-packet').setAttribute('opacity','0');
+}
+
+// ===== BUILD ENCAPSULATION (TAB 2) =====
+function buildEncap(){
+  const encDiv=document.getElementById('encap-visual');
+  const decDiv=document.getElementById('decap-visual');
+  encDiv.innerHTML=''; decDiv.innerHTML='';
+
+  // Encapsulation (sender, L7 down to L1)
+  LAYERS.forEach((L,i)=>{
+    const row=document.createElement('div');
+    row.className='encap-row';
+    row.innerHTML=`<div class="encap-label" style="color:${L.color};">L${L.n} ${L.name}</div>
+      <div class="encap-blocks" id="encap-row-${L.n}"></div>`;
+    encDiv.appendChild(row);
+
+    const blocks=document.getElementById(`encap-row-${L.n}`);
+    // Show headers added from this layer up to L7
+    const addedLayers=LAYERS.slice(0,i+1).reverse();
+    addedLayers.forEach((AL,ai)=>{
+      const isNew=ai===0;
+      const b=document.createElement('div');
+      b.className=`eblk${isNew?' added':''}`;
+      const label=AL.n===7?'DATA':AL.n===4?'TCP Hdr':AL.n===3?'IP Hdr':AL.n===2?'MAC Hdr':AL.n===1?'01001…':AL.name.substring(0,3)+'Hdr';
+      const isData=AL.n===7;
+      b.style.cssText=`color:${AL.color};border-color:${AL.color}44;background:${AL.dark};${isData?'flex:1;':''}`;
+      b.textContent=label;
+      if(!isData) blocks.prepend(b);
+      else blocks.appendChild(b);
+    });
+    // L1: also add trailer
+    if(L.n===1){
+      const t=document.createElement('div');
+      t.className='eblk added';
+      t.style.cssText=`color:${L.color};border-color:${L.color}44;background:${L.dark};`;
+      t.textContent='FCS';
+      document.getElementById(`encap-row-${L.n}`).appendChild(t);
+    }
+  });
+
+  // Decapsulation (receiver L1 up to L7)
+  [...LAYERS].reverse().forEach((L,i)=>{
+    const row=document.createElement('div');
+    row.className='encap-row';
+    row.innerHTML=`<div class="encap-label" style="color:${L.color};">L${L.n} ${L.name}</div>
+      <div class="encap-blocks" id="decap-row-${L.n}"></div>`;
+    decDiv.appendChild(row);
+
+    const blocks=document.getElementById(`decap-row-${L.n}`);
+    // Show remaining headers (strip from outside in)
+    const remaining=LAYERS.slice(0,7-i);
+    remaining.reverse().forEach((AL,ai)=>{
+      const b=document.createElement('div');
+      b.className='eblk';
+      const label=AL.n===7?'DATA':AL.n===4?'TCP Hdr':AL.n===3?'IP Hdr':AL.n===2?'MAC Hdr':AL.n===1?'01001…':AL.name.substring(0,3)+'Hdr';
+      const isData=AL.n===7;
+      const isStripped=AL.n===L.n;
+      b.style.cssText=`color:${AL.color};border-color:${AL.color}44;background:${AL.dark};opacity:${isStripped?'0.3':'1'};${isData?'flex:1;':''}${isStripped?'text-decoration:line-through;':''}`;
+      b.textContent=label+(isStripped?' ✕':'');
+      if(!isData) blocks.prepend(b);
+      else blocks.appendChild(b);
+    });
+    if(L.n===1){
+      const t=document.createElement('div');
+      t.className='eblk';
+      t.style.cssText=`color:${L.color};border-color:${L.color}44;background:${L.dark};opacity:.3;text-decoration:line-through;`;
+      t.textContent='FCS ✕';
+      document.getElementById(`decap-row-${L.n}`).appendChild(t);
+    }
+  });
+
+  // PDU tags
+  const pduDiv=document.getElementById('pdu-tags');
+  pduDiv.innerHTML='';
+  const pdus=[
+    {n:7,name:'Application',pdu:'Data / Message',color:'var(--l7)'},
+    {n:6,name:'Presentation',pdu:'Data',color:'var(--l6)'},
+    {n:5,name:'Session',pdu:'Data',color:'var(--l5)'},
+    {n:4,name:'Transport',pdu:'Segment',color:'var(--l4)'},
+    {n:3,name:'Network',pdu:'Packet',color:'var(--l3)'},
+    {n:2,name:'Data Link',pdu:'Frame',color:'var(--l2)'},
+    {n:1,name:'Physical',pdu:'Bits',color:'var(--l1)'},
+  ];
+  pdus.forEach(p=>{
+    const d=document.createElement('div');
+    d.style.cssText=`padding:8px 14px;border-radius:8px;border:1px solid ${p.color}44;background:${p.color}12;font-family:var(--mono);font-size:11px;`;
+    d.innerHTML=`<span style="color:${p.color};font-weight:700;">L${p.n}</span> <span style="color:${p.color};">${p.name}</span><br><span style="color:var(--muted);font-size:9px;">${p.pdu}</span>`;
+    pduDiv.appendChild(d);
+  });
+
+  // Header fields
+  const hfDiv=document.getElementById('header-fields');
+  hfDiv.innerHTML='';
+  LAYERS.slice(3,7).reverse().forEach(L=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);';
+    row.innerHTML=`<span style="font-family:var(--display);font-size:11px;color:${L.color};min-width:100px;flex-shrink:0;">L${L.n} ${L.name}</span>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted);line-height:1.7;">${L.header}</span>`;
+    hfDiv.appendChild(row);
+  });
+}
+
+// ===== LAYER EXPLORER (TAB 3) =====
+function buildExplorer(){
+  const grid=document.getElementById('explorer-grid');
+  grid.innerHTML='';
+  LAYERS.forEach(L=>{
+    const card=document.createElement('div');
+    card.className='expl-card';
+    card.id=`expl-${L.n}`;
+    card.style.cssText=`border-color:${L.color}33;background:${L.dark};`;
+    card.innerHTML=`<div class="expl-num" style="color:${L.color};">${L.n}</div>
+      <div class="expl-name" style="color:${L.color};">${L.name}</div>
+      <div class="expl-pdu">${L.pdu.split('/')[0].trim()}</div>`;
+    card.onclick=()=>showExplorerDetail(L);
+    grid.appendChild(card);
+  });
+}
+
+function showExplorerDetail(L){
+  document.querySelectorAll('.expl-card').forEach(c=>c.style.boxShadow='');
+  document.getElementById(`expl-${L.n}`).style.boxShadow=`0 0 20px ${L.color}44`;
+
+  const d=document.getElementById('explorer-detail');
+  d.innerHTML=`
+  <div style="background:var(--surface);border:1px solid ${L.color}44;border-radius:16px;padding:26px 28px;margin-top:16px;animation:fadeUp .3s ease;">
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);">
+      <div style="font-family:var(--display);font-size:48px;font-weight:900;color:${L.color};line-height:1;">${L.n}</div>
+      <div>
+        <div style="font-family:var(--display);font-size:18px;font-weight:700;color:${L.color};">${L.name} Layer</div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:4px;">${L.aka} &nbsp;·&nbsp; PDU: ${L.pdu}</div>
+      </div>
+      <div style="margin-left:auto;padding:8px 16px;border:1px solid ${L.color}44;border-radius:8px;font-family:var(--mono);font-size:10px;background:${L.dark};color:${L.color};">${L.sends}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:18px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">What it does</div>
+        <div style="font-size:13px;line-height:1.7;font-weight:300;color:${L.color};">${L.role}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Real World Example</div>
+        <div style="font-size:13px;line-height:1.7;font-weight:300;">${L.example}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Header Added</div>
+        <div style="font-family:var(--mono);font-size:10px;line-height:1.7;color:${L.color};">${L.header}</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Devices / Hardware</div>
+        <div style="font-size:13px;line-height:1.7;font-weight:300;">${L.hardware}</div>
+      </div>
+    </div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Protocols at Layer ${L.n}:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      ${L.protocols.map(p=>`<span style="padding:5px 11px;border-radius:5px;font-family:var(--mono);font-size:10px;border:1px solid ${L.color}44;background:${L.dark};color:${L.color};">${p}</span>`).join('')}
+    </div>
+  </div>`;
+}
+
+// ===== TAB MANAGER =====
+function goTab(n){
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('on',i===n));
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('on',i===n));
+  if(n===0) buildStack();
+  if(n===1){ buildAnimDemo(); resetAnim(); }
+  if(n===2) buildEncap();
+  if(n===3) buildExplorer();
+}
+
+// ===== INIT =====
+buildStack();
+// Pre-show first layer detail
+setTimeout(()=>showLayerDetail(LAYERS[0]),300);
+</script>
+</body>
+</html>
